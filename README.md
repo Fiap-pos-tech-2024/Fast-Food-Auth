@@ -58,17 +58,8 @@ docker run -p 8000:8000 amazon/dynamodb-local
 No diretório raiz do projeto, execute o comando:
 
 ```bash
-sam local start-api --env-vars env.json
+npm run start
 ```
-
-### 3. Testar a API
-
-A API estará disponível em `http://localhost:3000`. Você pode testar os endpoints `/register` e `/login` utilizando ferramentas como Postman ou cURL.
-
-## Comandos Úteis
-
-- `sam build`: Compila a aplicação.
-- `sam deploy`: Faz o deploy da aplicação na AWS.
 
 ## Testar o Código
 

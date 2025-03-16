@@ -4,7 +4,7 @@
   "description": "API de autenticação para fast-food",
   "scripts": {
     "test": "jest",
-    "start": "sam build && sam local start-api --env-vars env.json"
+    "start": "node dynamodb.js && sam build && sam local start-api --env-vars env.json"
   },
   "devDependencies": {
     "jest": "^29.7.0",
