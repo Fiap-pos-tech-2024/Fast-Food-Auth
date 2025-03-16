@@ -70,6 +70,14 @@ A API estará disponível em `http://localhost:3000`. Você pode testar os endpo
 - `sam build`: Compila a aplicação.
 - `sam deploy`: Faz o deploy da aplicação na AWS.
 
+## Testar o Código
+
+Para executar os testes, utilize o comando:
+
+```bash
+npm run test
+```
+
 ## Observações
 
 - Certifique-se de que as variáveis de ambiente estão configuradas corretamente no arquivo `env.json`.
