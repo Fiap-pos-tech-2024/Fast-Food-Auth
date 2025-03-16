@@ -4,7 +4,7 @@
   "description": "API de autenticação para fast-food",
   "scripts": {
     "test": "jest",
-    "start": "sam local start-api --env-vars env.json"
+    "start": "sam build && sam local start-api --env-vars env.json"
   },
   "devDependencies": {
     "jest": "^29.7.0",
@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "aws-sdk": "^2.1692.0",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "jsonwebtoken": "^9.0.2"
   }
 }

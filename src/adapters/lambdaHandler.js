@@ -8,6 +8,8 @@ exports.handler = async (event) => {
     return await userController.register(event);
   } else if (event.httpMethod === "POST" && event.path === "/login") {
     return await userController.login(event);
+  } else if (event.httpMethod === "GET" && event.path === "/verify-token") {
+    return await userController.verifyToken(event);
   } else {
     return {
       statusCode: 404,
