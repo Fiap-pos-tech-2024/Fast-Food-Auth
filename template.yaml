@@ -22,7 +22,12 @@ Resources:
           Properties:
             Path: /login
             Method: post
-    DependsOn: UsersDynamoDbTable # Adicione esta linha para criar dependência
+        VerifyToken:
+          Type: Api
+          Properties:
+            Path: /verify-token
+            Method: post
+    DependsOn: UsersDynamoDbTable
   UsersDynamoDbTable:
     Type: AWS::DynamoDB::Table
     Properties:

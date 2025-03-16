@@ -1,5 +1,7 @@
 const registerUserUseCase = require("../../usecases/RegisterUserUseCase");
 const loginUserUseCase = require("../../usecases/LoginUserUseCase");
+const jwt = require("jsonwebtoken");
+const authConfig = require("../../config/auth");
 
 class UserController {
   async register(event) {
@@ -26,18 +28,40 @@ class UserController {
     const body = JSON.parse(event.body);
     const { cpf, password } = body;
     try {
-      const user = await loginUserUseCase.execute({ cpf, password });
+      const { token } = await loginUserUseCase.execute({ cpf, password });
       return {
         statusCode: 200,
         body: JSON.stringify({
           message: "Login realizado com sucesso",
-          user,
+          token,
         }),
       };
     } catch (error) {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: error.message }),
+      };
+    }
+  }
+
+  async verifyToken(event) {
+    const token = event.headers.Authorization;
+    try {
+      const decoded = jwt.verify(
+        token,
+        authConfig.secretOrPrivateKey || "your-secret-key"
+      );
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          message: "Token válido",
+          decoded,
+        }),
+      };
+    } catch (error) {
+      return {
+        statusCode: 401,
+        body: JSON.stringify({ error: "Token inválido" }),
       };
     }
   }
