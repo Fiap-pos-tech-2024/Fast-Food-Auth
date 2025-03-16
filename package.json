@@ -2,7 +2,13 @@
   "name": "fast-food-auth",
   "version": "1.0.0",
   "description": "API de autenticação para fast-food",
+  "scripts": {
+    "test": "jest",
+    "start": "sam local start-api --env-vars env.json"
+  },
   "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-mock": "^29.7.0",
     "serverless-offline": "^14.4.0"
   },
   "dependencies": {

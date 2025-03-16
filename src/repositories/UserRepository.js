@@ -2,7 +2,10 @@ const AWS = require("aws-sdk");
 
 const dynamoDb = new AWS.DynamoDB.DocumentClient({
   endpoint: process.env.DYNAMODB_ENDPOINT || "http://localhost:8000",
-  credentials: new AWS.Credentials("fakeAccessKeyId", "fakeSecretAccessKey"),
+  credentials:
+    process.env.NODE_ENV === "test"
+      ? new AWS.Credentials("fakeAccessKeyId", "fakeSecretAccessKey")
+      : undefined,
 });
 
 const TABLE_NAME = process.env.USERS_TABLE || "Users";
