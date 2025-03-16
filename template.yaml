@@ -1,0 +1,36 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  Api:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/adapters/lambdaHandler.handler
+      Runtime: nodejs18.x
+      Timeout: 90
+      Environment:
+        Variables:
+          USERS_TABLE: Users
+          DYNAMODB_ENDPOINT: http://localhost:8000
+      Events:
+        Register:
+          Type: Api
+          Properties:
+            Path: /register
+            Method: post
+        Login:
+          Type: Api
+          Properties:
+            Path: /login
+            Method: post
+    DependsOn: UsersDynamoDbTable # Adicione esta linha para criar dependência
+  UsersDynamoDbTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Users
+      AttributeDefinitions:
+        - AttributeName: cpf
+          AttributeType: S
+      KeySchema:
+        - AttributeName: cpf
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST

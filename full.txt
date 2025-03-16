@@ -1,0 +1,216 @@
+const registerUserUseCase = require("../../usecases/RegisterUserUseCase");
+const loginUserUseCase = require("../../usecases/LoginUserUseCase");
+
+class UserController {
+  async register(event) {
+    const body = JSON.parse(event.body);
+    const { cpf, password } = body;
+    try {
+      const user = await registerUserUseCase.execute({ cpf, password });
+      return {
+        statusCode: 201,
+        body: JSON.stringify({
+          message: "Usuário registrado com sucesso",
+          user,
+        }),
+      };
+    } catch (error) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: error.message }),
+      };
+    }
+  }
+
+  async login(event) {
+    const body = JSON.parse(event.body);
+    const { cpf, password } = body;
+    try {
+      const user = await loginUserUseCase.execute({ cpf, password });
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          message: "Login realizado com sucesso",
+          user,
+        }),
+      };
+    } catch (error) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: error.message }),
+      };
+    }
+  }
+}
+
+module.exports = new UserController();
+
+const userController = require("./controllers/UserController");
+
+exports.handler = async (event) => {
+  console.log("Evento recebido:", event);
+
+  // Roteamento simples baseado no método HTTP e caminho
+  if (event.httpMethod === "POST" && event.path === "/register") {
+    return await userController.register(event);
+  } else if (event.httpMethod === "POST" && event.path === "/login") {
+    return await userController.login(event);
+  } else {
+    return {
+      statusCode: 404,
+      body: JSON.stringify({ error: "Rota não encontrada" }),
+    };
+  }
+};
+
+class User {
+  constructor(cpf, password) {
+    this.cpf = cpf;
+    this.password = password;
+  }
+}
+
+module.exports = User;
+
+
+
+const AWS = require("aws-sdk");
+
+const dynamoDb = new AWS.DynamoDB.DocumentClient({
+  endpoint: process.env.DYNAMODB_ENDPOINT || undefined,
+});
+
+const TABLE_NAME = process.env.USERS_TABLE || "Users";
+
+class UserRepository {
+  async create(user) {
+    // Verifica se o usuário já existe
+    const existingUser = await this.findByCpf(user.cpf);
+    if (existingUser) {
+      throw new Error("Usuário já existe");
+    }
+
+    const params = {
+      TableName: TABLE_NAME,
+      Item: {
+        cpf: user.cpf,
+        password: user.password, // Em produção, utilize hash para senhas!
+      },
+      ConditionExpression: "attribute_not_exists(cpf)",
+    };
+
+    await dynamoDb.put(params).promise();
+    return user;
+  }
+
+  async findByCpf(cpf) {
+    const params = {
+      TableName: TABLE_NAME,
+      Key: { cpf },
+    };
+
+    const result = await dynamoDb.get(params).promise();
+    return result.Item;
+  }
+}
+
+module.exports = new UserRepository();
+
+const userRepository = require("../repositories/UserRepository");
+
+class LoginUserUseCase {
+  async execute({ cpf, password }) {
+    const user = await userRepository.findByCpf(cpf);
+    if (!user || user.password !== password) {
+      throw new Error("CPF ou senha inválidos");
+    }
+    return user;
+  }
+}
+
+module.exports = new LoginUserUseCase();
+
+const User = require("../domain/entities/User");
+const userRepository = require("../repositories/UserRepository");
+
+class RegisterUserUseCase {
+  async execute({ cpf, password }) {
+    // Em produção, a senha deve ser armazenada com hash.
+    const user = new User(cpf, password);
+    return await userRepository.create(user);
+  }
+}
+
+module.exports = new RegisterUserUseCase();
+
+service: user-service
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  environment:
+    USERS_TABLE: Users
+    DYNAMODB_ENDPOINT: http://host.docker.internal:8000
+
+functions:
+  api:
+    handler: src/adapters/lambdaHandler.handler
+    timeout: 90
+    events:
+      - http:
+          path: /register
+          method: post
+      - http:
+          path: /login
+          method: post
+
+resources:
+  Resources:
+    UsersDynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.USERS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: cpf
+            AttributeType: S
+        KeySchema:
+          - AttributeName: cpf
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  Api:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/adapters/lambdaHandler.handler
+      Runtime: nodejs18.x
+      Timeout: 90
+      Environment:
+        Variables:
+          USERS_TABLE: Users
+          DYNAMODB_ENDPOINT: http://localhost:8000
+      Events:
+        Register:
+          Type: Api
+          Properties:
+            Path: /register
+            Method: post
+        Login:
+          Type: Api
+          Properties:
+            Path: /login
+            Method: post
+    DependsOn: UsersDynamoDbTable # Adicione esta linha para criar dependência
+  UsersDynamoDbTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Users
+      AttributeDefinitions:
+        - AttributeName: cpf
+          AttributeType: S
+      KeySchema:
+        - AttributeName: cpf
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
