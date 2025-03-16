@@ -9,7 +9,7 @@ const dynamoDb = new AWS.DynamoDB({
 
 // Definição da tabela
 const params = {
-  TableName: "Users",
+  TableName: "User",
   AttributeDefinitions: [
     { AttributeName: "cpf", AttributeType: "S" }, // Chave primária CPF (String)
   ],
